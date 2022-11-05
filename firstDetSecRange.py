@@ -5,7 +5,7 @@ import os
 import time
 
 key_color = {
-    'blue' : ((149, 126, 90), (165, 255, 255)),
+    'blue' : ((145, 126, 90), (165, 255, 255)),
     'yellow' : ((34, 83, 50), (48, 255, 255)),
     'red' : ((240, 110, 47), (360, 255, 255), (20))
 }
@@ -30,13 +30,16 @@ def create_etalon_dict(dir_name: str) -> dict:
 park_detector = db.simple_object_detector("parking_sign.svm")
 stop_detector = db.simple_object_detector("fullStopDetector.svm")
 no_drive_detector = db.simple_object_detector("fullNoDriveDetector.svm")
-
+kirpich_detector = db.simple_object_detector("full_kirpich.svm")
+park_zebra_detector = db.simple_object_detector("fullParkAndZebraDetector.svm")
 
 def get_crop_sign(img: np.ndarray) -> list:
     detect = [
         stop_detector(img),
         no_drive_detector(img),
-        park_detector(img)
+        park_detector(img),
+        kirpich_detector(img),
+        park_zebra_detector(img)
     ]
 
     img_copy = img.copy()
@@ -82,7 +85,12 @@ def compare(mask: np.ndarray, color: str) -> str:
         comp = np.zeros((64, 64))
         comp[etalon_mask == mask] = 1
         comp_sum = np.sum(comp)
-        if 2700 < comp_sum < 3550:
+
+        cv.imshow("comp", comp)
+
+        cv.waitKey()
+
+        if 2700 < comp_sum:
             comp_summ_list.append((sign_name, np.sum(comp)))
 
 
@@ -107,12 +115,12 @@ while True:
             blue_mask = getMask(frame, key_color['blue'])
             if not isinstance(blue_mask, type(None)):
                 compare(blue_mask, 'blue')
-                cv.imshow("blue", cv.resize(blue_mask, (128, 128)))
+                cv.imshow("blue", cv.resize(blue_mask, (256, 256)))
 
             red_mask = getMask(frame, key_color['red'])
             if not isinstance(red_mask, type(None)):
                 compare(red_mask, 'red')
-                # cv.imshow("red", cv.resize(red_mask, (128, 128)))
+                cv.imshow("red", cv.resize(red_mask, (128, 128)))
 
         cv.imshow("frame", frame_rgb)
         
